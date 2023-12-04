@@ -33,6 +33,11 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'guide', 'lead-guide', 'admin'],
     default: 'user',
   },
+  active: {
+    type: Boolean,
+    default: true,
+    select: false,
+  },
   confirmPassword: {
     type: String,
     require: [true, 'Please confirm your password'],
@@ -91,6 +96,11 @@ userSchema.methods.createPassowrdResetToken = function () {
 
   return resetToken;
 };
+
+userSchema.pre(/^find/, function (next) {
+  this.find({ active: { $ne: false } });
+  next();
+});
 
 const User = mongoose.model('User', userSchema);
 

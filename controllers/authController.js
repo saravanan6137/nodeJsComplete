@@ -11,17 +11,36 @@ const signToken = (id) => {
   });
 };
 
+const createSendToken = (user, statusCode, res) => {
+  const token = signToken(user._id);
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+  };
+  if (process.env.NODE_ENV === 'production') {
+    cookieOptions.secure = true;
+  }
+  res.cookie('jwt', token, cookieOptions)
+
+  // Remove password from output
+  user.password = undefined
+
+  res.status(statusCode).json({
+    status: 'success',
+    jwtToken: token,
+    data: {
+      user
+    },
+  });
+  
+}
+
 exports.signUp = async (req, res) => {
   try {
     const newUser = await User.create(req.body);
-    const token = signToken(newUser._id);
-    res.status(200).json({
-      status: 'success',
-      jwtToken: token,
-      data: {
-        user: newUser,
-      },
-    });
+    createSendToken(newUser, 201, res);
   } catch (err) {
     res.status(500).json({
       mesage: 'Failed',
@@ -48,15 +67,7 @@ exports.login = async (req, res) => {
       });
     }
     //3) If everything ok, send token to client.
-    const token = signToken(user._id);
-    console.log(user._id, token);
-    res.status(200).json({
-      status: 'success',
-      token: token,
-      data: {
-        user: user,
-      },
-    });
+    createSendToken(user, 200, res);
   } catch (err) {
     res.status(401).json({
       error: err,
@@ -180,11 +191,7 @@ exports.resetPassword = async (req, res, next) => {
   //3) update ChangedPasswordAt property for the user //in middleware
 
   //4) Log the user in, send JWT.
-  const token = signToken(user._id);
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+  createSendToken(user, 200, res);
 };
 
 exports.updatePassword = async (req, res, next) => {
@@ -207,11 +214,7 @@ exports.updatePassword = async (req, res, next) => {
     await user.save();
 
     //4) Log user in, send jwt
-    const token = signToken(user._id);
-    res.status(200).json({
-      status: 'success',
-      token,
-    });
+    createSendToken(user, 200, res);
   } catch (err) {
     res.status(500).json({
       mesage: 'Failed',
