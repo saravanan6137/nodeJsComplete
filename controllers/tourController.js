@@ -61,7 +61,6 @@ exports.getTour = async (req, res) => {
 };
 
 exports.createTour = async (req, res) => {
-  console.log('reached here');
   try {
     const newTour = await Tour.create(req.body);
 

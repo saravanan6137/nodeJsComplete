@@ -5,7 +5,15 @@ const AppError = require('../Utils/appErrors');
 exports.getAllUsers = async (req, res) => {
   try {
     // Execute the query
-    const users = await User.find();
+    const role = req.query.role; // Assuming req.query.role contains the role value
+    let users;
+
+    if (role) {
+      users = await User.find({ role: role });
+    } else {
+      // If no role is provided, fetch all users
+      users = await User.find();
+    }
     //Send Response
     res.status(200).json({
       status: 'success',
@@ -25,10 +33,10 @@ exports.getAllUsers = async (req, res) => {
 const filterObj = (obj, ...allowedFields) => {
   const newObj = {};
   Object.keys(obj).forEach((el) => {
-    console.log( obj[el])
+    console.log(obj[el])
     if (allowedFields.includes(el)) {
       newObj[el] = obj[el]
-      console.log( newObj[el])
+      console.log(newObj[el])
     }
   });
   return newObj;
@@ -67,7 +75,7 @@ exports.updateMe = async (req, res, next) => {
   }
 };
 
-exports.deleteMe = async(req, res, next) => {
+exports.deleteMe = async (req, res, next) => {
   console.log('came')
   try {
     await User.findByIdAndUpdate(req.user._id, { active: false });
@@ -75,8 +83,8 @@ exports.deleteMe = async(req, res, next) => {
       status: 'success',
       data: null
     });
-   
-  } catch(error) {
+
+  } catch (error) {
     res.status(404).json({
       status: 'Failed',
       err: err.message,
@@ -106,24 +114,45 @@ exports.getUser = async (req, res) => {
   }
 };
 
-exports.createUser = (req, res) => {
-  // console.log(req.body);
-  res.status(500).json({
-    status: 'Error',
-    message: 'This route is not yet defined',
-  });
+exports.createUser = async (req, res) => {
+  try {
+    const newUser = await User.create(req.body);
+
+    res.status(201).json({
+      status: 'success',
+      data: {
+        user: newUser,
+      },
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'Fail',
+      message: err,
+    });
+  }
 };
 
-exports.updateUser = (req, res) => {
-  res.status(500).json({
-    status: 'Error',
-    message: 'This route is not yet defined',
-  });
+exports.updateUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    res.status(200).json({
+      success: 'success',
+      data: {
+        user: user,
+      },
+    });
+  } catch (err) { }
 };
 
-exports.deleteUser = (req, res) => {
-  res.status(500).json({
-    status: 'Error',
-    message: 'This route is not yet defined',
-  });
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    res.status(204).json({
+      success: 'success',
+      data: null,
+    });
+  } catch (err) { }
 };

@@ -136,6 +136,8 @@ tourSchema.virtual('reviews', {
 
 //QUERY MIDDLEWARE
 
+tourSchema.index({price: 1, ratingsAverage: -1})
+
 tourSchema.pre(/^find/, function (next) {
   this.find({ secretTour: { $ne: true } });
   this.start = Date.now();
